@@ -28,5 +28,8 @@ class DefaultLabelComboBox(QWidget):
 
     def update_items(self, items):
         self.items = items
+        cur_text = self.cb.currentText()
         self.cb.clear()
         self.cb.addItems(self.items)
+        if cur_text in items:
+            self.cb.setCurrentText(cur_text)
