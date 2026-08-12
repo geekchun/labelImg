@@ -875,6 +875,8 @@ class MainWindow(QMainWindow, WindowMixin):
         unique_text_list.sort()
 
         self.combo_box.update_items(unique_text_list)
+        # 同步刷新"使用预设类"下拉框
+        self.default_label_combo_box.update_items(self.label_hist)
 
     def save_labels(self, annotation_file_path):
         annotation_file_path = ustr(annotation_file_path)
@@ -1191,6 +1193,7 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.load_pascal_xml_by_filename(xml_path)
             elif os.path.isfile(txt_path):
                 self.load_yolo_txt_by_filename(txt_path)
+                self._load_classes_from_file_dir(txt_path)
             elif os.path.isfile(json_path):
                 self.load_create_ml_json_by_filename(json_path, file_path)
 
@@ -1203,9 +1206,28 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.load_pascal_xml_by_filename(xml_path)
             elif os.path.isfile(txt_path):
                 self.load_yolo_txt_by_filename(txt_path)
+                self._load_classes_from_file_dir(txt_path)
             elif os.path.isfile(json_path):
                 self.load_create_ml_json_by_filename(json_path, file_path)
-            
+
+    def _load_classes_from_file_dir(self, annotation_file):
+        """读取标注文件同目录的 classes.txt，将其中的类合并进 label_hist，
+        并刷新"使用预设类"下拉框。"""
+        classes_file = os.path.join(os.path.dirname(os.path.abspath(annotation_file)), "classes.txt")
+        if not os.path.isfile(classes_file):
+            return
+        try:
+            with codecs.open(classes_file, 'r', encoding='utf-8') as f:
+                classes = [line.strip() for line in f if line.strip()]
+        except Exception:
+            return
+        changed = False
+        for c in classes:
+            if c not in self.label_hist:
+                self.label_hist.append(c)
+                changed = True
+        if changed:
+            self.default_label_combo_box.update_items(self.label_hist)
 
     def resizeEvent(self, event):
         if self.canvas and not self.image.isNull()\

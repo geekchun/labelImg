@@ -55,13 +55,23 @@ class YOLOWriter:
             out_file = open(
             self.filename + TXT_EXT, 'w', encoding=ENCODE_METHOD)
             classes_file = os.path.join(os.path.dirname(os.path.abspath(self.filename)), "classes.txt")
-            out_class_file = open(classes_file, 'w')
 
         else:
             out_file = codecs.open(target_file, 'w', encoding=ENCODE_METHOD)
             classes_file = os.path.join(os.path.dirname(os.path.abspath(target_file)), "classes.txt")
-            out_class_file = open(classes_file, 'w')
 
+        # 合并已有 classes.txt，避免保存时覆盖丢失历史类
+        existing = []
+        if os.path.exists(classes_file):
+            with codecs.open(classes_file, 'r', encoding=ENCODE_METHOD) as f:
+                existing = [line.strip() for line in f if line.strip()]
+        merged = list(existing)
+        for c in class_list:
+            if c not in merged:
+                merged.append(c)
+        class_list = merged
+
+        out_class_file = codecs.open(classes_file, 'w', encoding=ENCODE_METHOD)
 
         for box in self.box_list:
             class_index, x_center, y_center, w, h = self.bnd_box_to_yolo_line(box, class_list)
